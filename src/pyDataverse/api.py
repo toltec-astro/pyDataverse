@@ -171,7 +171,15 @@ class Api:
             params["key"] = self.api_token
 
         try:
-            resp = post(url, data=data, params=params, files=files)
+            if isinstance(data, dict):
+                kwargs={"json": data}
+            elif isinstance(data, str):
+                kwargs={"data": data}
+            elif data is None:
+                kwargs={}
+            else:
+                raise TypeError("invalid data type.")
+            resp = post(url, params=params, files=files, **kwargs)
             if resp.status_code == 401:
                 error_msg = resp.json()["message"]
                 raise ApiAuthorizationError(
@@ -1196,8 +1204,8 @@ class NativeApi(Api):
             url = "{0}/dataverses/{1}/datasets".format(
                 self.base_url_api_native, dataverse
             )
-        resp = self.post_request(url, metadata, auth)
 
+        resp = self.post_request(url, metadata, auth)
         if resp.status_code == 404:
             error_msg = resp.json()["message"]
             raise DataverseNotFoundError(

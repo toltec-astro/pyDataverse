@@ -11,7 +11,7 @@
       "properties": {
         "license": {
           "$id": "#/properties/datasetVersion/properties/license",
-          "type": "string"
+          "type": "object"
         },
         "termsOfUse": {
           "$id": "#/properties/datasetVersion/properties/termsOfUse",
