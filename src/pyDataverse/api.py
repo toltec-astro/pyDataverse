@@ -140,7 +140,7 @@ class Api:
                 "ERROR: GET - Could not establish connection to api {0}.".format(url)
             )
 
-    def post_request(self, url, data=None, auth=False, params=None, files=None):
+    def post_request(self, url, data=None, json=None, auth=False, params=None, files=None):
         """Make a POST request.
 
         params will be added as key-value pairs to the URL.
@@ -151,6 +151,8 @@ class Api:
             Full URL.
         data : str
             Metadata as a json-formatted string. Defaults to `None`.
+        json : dict
+            Metadata as a json dict. Defaults to `None`.
         auth : bool
             Should an api token be sent in the request. Defaults to `False`.
         files: dict
@@ -171,15 +173,10 @@ class Api:
             params["key"] = self.api_token
 
         try:
-            if isinstance(data, dict):
-                kwargs={"json": data}
-            elif isinstance(data, str):
-                kwargs={"data": data}
-            elif data is None:
-                kwargs={}
-            else:
-                raise TypeError("invalid data type.")
-            resp = post(url, params=params, files=files, **kwargs)
+            if data is not None and json is not None:
+                raise TypeError("only one of data and json can be provided.")
+            resp = post(url, params=params, files=files, data=data, json=json)
+
             if resp.status_code == 401:
                 error_msg = resp.json()["message"]
                 raise ApiAuthorizationError(
@@ -718,7 +715,7 @@ class NativeApi(Api):
         metadata_dict = json.loads(metadata)
         identifier = metadata_dict["alias"]
         url = "{0}/dataverses/{1}".format(self.base_url_api_native, parent)
-        resp = self.post_request(url, metadata, auth)
+        resp = self.post_request(url, json=metadata_dict, auth=auth)
 
         if resp.status_code == 404:
             error_msg = resp.json()["message"]
@@ -1205,7 +1202,8 @@ class NativeApi(Api):
                 self.base_url_api_native, dataverse
             )
 
-        resp = self.post_request(url, metadata, auth)
+        metadata_dict = json.loads(metadata)
+        resp = self.post_request(url, json=metadata_dict, auth=auth)
         if resp.status_code == 404:
             error_msg = resp.json()["message"]
             raise DataverseNotFoundError(
